@@ -32,7 +32,7 @@ services:
       retries: 5
       start_period: 10s
 
-litellm:
+  litellm:
     image: ghcr.io/berriai/litellm:main-latest
     ports:
       - "4000:4000"
@@ -53,15 +53,15 @@ litellm:
       start_period: 30s
 
   langfuse:
-    image: langfuse/langfuse:latest
+    image: langfuse/langfuse:2
     ports:
-      - "3000:3000"
+      - "3100:3000"
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://langfuse:langfuse@postgres:5432/langfuse
-      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_URL: http://localhost:3100
       NEXTAUTH_SECRET: local-nextauth-secret-changeme
       SALT: local-salt-changeme
       TELEMETRY_ENABLED: "false"
