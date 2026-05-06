@@ -4,12 +4,18 @@ model_list:
       model: gemini/gemini-2.5-flash-lite
       api_key: os.environ/GEMINI_API_KEY
 
+  - model_name: gemini-flash-fallback
+    litellm_params:
+      model: gemini/gemini-3.1-flash-lite-preview
+      api_key: os.environ/GEMINI_API_KEY
+
 router_settings:
   routing_strategy: least-busy
+  fallbacks: [{"gemini-flash": ["gemini-flash-fallback"]}]
 
 litellm_settings:
-  success_callback: ["langfuse"]
-  failure_callback: ["langfuse"]
+  success_callback: ["langfuse", "prometheus"]
+  failure_callback: ["langfuse", "prometheus"]
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY

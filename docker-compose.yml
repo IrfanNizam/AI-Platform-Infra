@@ -33,7 +33,7 @@ services:
       start_period: 10s
 
   litellm:
-    image: ghcr.io/berriai/litellm:main-latest
+    image: ghcr.io/berriai/litellm:v1.83.10-stable
     ports:
       - "4000:4000"
     volumes:
@@ -76,5 +76,29 @@ services:
       LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_USER_PASSWORD}
       LANGFUSE_INIT_USER_NAME: Admin
 
+  prometheus:
+    image: prom/prometheus:v3.4.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    depends_on:
+      - litellm
+
+  grafana:
+    image: grafana/grafana:11.6.1
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+
 volumes:
   postgres_data:
+  prometheus_data:
+  grafana_data:
