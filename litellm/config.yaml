@@ -1,7 +1,7 @@
 model_list:
   - model_name: gemini-flash
     litellm_params:
-      model: gemini/gemini-2.5-flash-lite
+      model: gemini/gemini-3-flash-preview
       api_key: os.environ/GEMINI_API_KEY
 
   - model_name: gemini-flash-fallback
