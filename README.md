@@ -1,6 +1,6 @@
 # AI Platform Infra
 
-A self-hosted AI platform infrastructure built to demonstrate production-grade patterns for running agentic applications. Routes LLM requests through a centralised gateway, traces every call for observability, and exposes infrastructure metrics for real-time monitoring — all running locally on Docker Compose at zero cost.
+A self-hosted AI platform infrastructure built to demonstrate production-grade patterns for running agentic applications. Routes LLM requests through a centralised gateway, traces every call for observability, and exposes infrastructure metrics for real-time monitoring — **fully open source, runs entirely locally, at zero cost.**
 
 ---
 
@@ -11,27 +11,43 @@ This project is the **platform layer** for AI applications. The demo-app represe
 The separation matters: the application developer writes agent logic, the platform engineer owns everything below — and that boundary is exactly what this project demonstrates.
 
 ```
-┌─────────────────────────────────────────────┐
+┌──────────────────────────────────────────────┐
 │              agentic application             │
 │                  demo-app                    │  ← agent logic lives here
-└─────────────────────┬───────────────────────┘
+└─────────────────────┬────────────────────────┘
                       │
-┌─────────────────────▼───────────────────────┐
+┌─────────────────────▼────────────────────────┐
 │              AI API gateway                  │
 │                  LiteLLM                     │  ← platform layer starts here
 │    routing · fallback · token budgets        │
-└──────────┬──────────────────────┬───────────┘
+└──────────┬──────────────────────┬────────────┘
            │                      │
-┌──────────▼──────┐    ┌──────────▼──────────┐
-│ gemini-3-flash  │    │ gemini-3.1-flash     │
-│ (primary)       │    │ -lite (fallback)     │
-└─────────────────┘    └─────────────────────┘
+┌──────────▼──────┐    ┌──────────▼───────────┐
+│ gemini-3-flash  │    │ gemini-3.1-flash      │
+│ (primary)       │    │ -lite (fallback)      │
+└─────────────────┘    └──────────────────────┘
 
-┌─────────────────────────────────────────────┐
+┌──────────────────────────────────────────────┐
 │              observability                   │
 │  Langfuse (LLM traces) · Prometheus · Grafana│
-└─────────────────────────────────────────────┘
+└──────────────────────────────────────────────┘
 ```
+
+---
+
+## Stack
+
+Everything in this project is either open source or free tier. No cloud spend required.
+
+| Component | Tool | Cost |
+|---|---|---|
+| LLM provider (primary) | Gemini 3 Flash — Google AI Studio free tier | Free |
+| LLM provider (fallback) | Gemini 3.1 Flash Lite — Google AI Studio free tier | Free |
+| AI API gateway | LiteLLM (open source) | Free |
+| LLM observability | Langfuse v2 (self-hosted) | Free |
+| Infra metrics | Prometheus + Grafana (self-hosted) | Free |
+| Database | Postgres (self-hosted) | Free |
+| Container runtime | Docker Desktop | Free personal use |
 
 ---
 
@@ -46,23 +62,13 @@ The separation matters: the application developer writes agent logic, the platfo
 | Grafana | 3001 | Visualises Prometheus metrics — request rates, token usage, errors |
 | Postgres | 5432 | Shared database — two isolated DBs: `langfuse` and `devdb` |
 
+---
+
 ## Design Considerations
 
-**Observability at the gateway, not the application** — Langfuse and 
-Prometheus are wired into LiteLLM, not the demo-app. Any application 
-calling the gateway gets full tracing and metrics without any code changes. 
-This keeps observability a platform concern, not an application concern.
+**Observability at the gateway, not the application** — Langfuse and Prometheus are wired into LiteLLM, not the demo-app. Any application calling the gateway gets full tracing and metrics without any code changes. This keeps observability a platform concern, not an application concern.
 
-**Gateway pattern for LLM traffic** — LiteLLM applies the same patterns 
-used in traditional API infrastructure (rate limiting, fallback routing, 
-cost tracking) to LLM traffic. Swapping models or adding providers requires 
-zero application changes.
-
-### Key design decisions
-
-**Gateway-level observability** — Langfuse traces and Prometheus metrics are wired at the LiteLLM layer, not the application layer. The demo-app has zero observability code. Any application that calls LiteLLM gets full tracing automatically.
-
-**Multi-model fallback** — LiteLLM routes to `gemini-3-flash-preview` as primary. If it fails or rate-limits, it automatically falls back to `gemini-3.1-flash-lite-preview`. The calling application never needs to handle this.
+**Gateway pattern for LLM traffic** — LiteLLM applies the same patterns used in traditional API infrastructure (rate limiting, fallback routing, cost tracking) to LLM traffic. Swapping models or adding providers requires zero application changes.
 
 **Single Postgres, two databases** — LiteLLM and Langfuse each get an isolated database inside one Postgres container. An `init.sql` script creates both databases automatically on first start — no manual setup needed.
 
@@ -88,7 +94,6 @@ zero application changes.
 ```bash
 git clone https://github.com/IrfanNizam/AI-Platform-Infra.git
 cd AI-Platform-Infra
-git checkout feature/dev
 ```
 
 **2. Configure environment variables**
@@ -215,5 +220,3 @@ The agent developer writes the logic. The platform layer handles reliability, ob
 - [ ] Per-project token budgets and chargeback via LiteLLM virtual keys
 - [ ] Frontend UI for demo-app
 - [ ] Harden secrets — move from `.env` to a proper secrets manager
-
----
